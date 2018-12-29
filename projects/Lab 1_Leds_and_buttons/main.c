@@ -62,14 +62,14 @@ int main(void)
 	LedsInit();
 	ButtonsInit();
 
-	int light=1;
-	uint8_t order = 0;
+	int light = 1, order = 0;
 	while (1)
 	  {
-		int a =  GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_0);
-		if(a==0) light *= -1;		  
-		order+=light;
-		order %=3;
+		int a = GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_0);
+		if(a == 0) light *= -1;		  
+		orde r+= light;
+		order %= 3;
+		if(order < 0) order = 2;
 		Light(order);
 	  }
 }
