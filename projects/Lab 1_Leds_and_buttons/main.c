@@ -67,7 +67,7 @@ int main(void)
 	  {
 		int a = GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_0);
 		if(a == 0) light *= -1;		  
-		orde r+= light;
+		order += light;
 		order %= 3;
 		if(order < 0) order = 2;
 		Light(order);
