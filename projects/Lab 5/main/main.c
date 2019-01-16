@@ -2,9 +2,7 @@
 
 int main(void)
 {
-	Init_TIM1(30000,100);
-	Init_PWM();
-	LedsInit();
+	Init(30000,100);
 
 	while (1)
 	  {

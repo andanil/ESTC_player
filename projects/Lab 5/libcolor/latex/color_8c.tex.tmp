@@ -17,6 +17,8 @@ Include dependency graph for color.\+c\+:
 \subsection*{Functions}
 \begin{DoxyCompactItemize}
 \item 
+void \hyperlink{color_8c_ae8aa6ad5c6fa652e3b5ce8dd766b4bb5}{Init} (int per, int pres)
+\item 
 void \hyperlink{color_8c_a62dc37fff66610f411d23a81fd593a1a}{Leds\+Init} (void)
 \item 
 void \hyperlink{color_8c_aa73898f75df33de7c36de9327ae2a8e9}{Set\+Color} (int red, int green, int blue)
@@ -33,6 +35,19 @@ Library color.
 Library to set colors 
 
 \subsection{Function Documentation}
+\mbox{\Hypertarget{color_8c_ae8aa6ad5c6fa652e3b5ce8dd766b4bb5}\label{color_8c_ae8aa6ad5c6fa652e3b5ce8dd766b4bb5}} 
+\index{color.\+c@{color.\+c}!Init@{Init}}
+\index{Init@{Init}!color.\+c@{color.\+c}}
+\subsubsection{\texorpdfstring{Init()}{Init()}}
+{\footnotesize\ttfamily void Init (\begin{DoxyParamCaption}\item[{int}]{per,  }\item[{int}]{pres }\end{DoxyParamCaption})}
+
+Initialize components 
+\begin{DoxyParams}{Parameters}
+{\em per} & Period \\
+\hline
+{\em pres} & Prescaler \\
+\hline
+\end{DoxyParams}
 \mbox{\Hypertarget{color_8c_ad9239ecb694070e87dbf243d912b7064}\label{color_8c_ad9239ecb694070e87dbf243d912b7064}} 
 \index{color.\+c@{color.\+c}!Init\+\_\+\+P\+WM@{Init\+\_\+\+P\+WM}}
 \index{Init\+\_\+\+P\+WM@{Init\+\_\+\+P\+WM}!color.\+c@{color.\+c}}

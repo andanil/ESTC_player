@@ -10,6 +10,13 @@ Library to set colors
 #define SWITCH_DELAY 500000
 static int period = 30000;
 
+void Init(int per, int pres)
+{
+	LedsInit();
+	Init_TIM1(per, pres);
+	Init_PWM();	
+}
+
 void LedsInit(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;

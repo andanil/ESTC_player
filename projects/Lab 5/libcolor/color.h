@@ -32,5 +32,11 @@ void Init_TIM1(int per, int pres);
 PWM initialization
 */
 void Init_PWM(void);
+/*!
+Initialize components
+\param per Period
+\param pres Prescaler
+*/
+void Init(int per, int pres);
 
 #endif /*COLOR_H*/
