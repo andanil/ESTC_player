@@ -1,16 +1,13 @@
-BUILD_ROOT=../..
-OBJS = main.o
+all: main
+flash: main
+	@$(MAKE) -C main flash
 
-BINARY_NAME = main
+main: library
+	@$(MAKE) -C main all
 
-include $(BUILD_ROOT)/common_defs.mk
-
-.PHONY: $(BINARY_NAME)
-
-$(BINARY_NAME): $(BINARY_NAME).bin
+library:
+	@$(MAKE) -C libcolor all
 
 clean:
-	@rm -f $(OBJS) main.elf main.bin main.elf.map
-
-flash: $(BINARY_NAME)
-	$(FLASH_BINARY)
+	@$(MAKE) -C main clean
+	@$(MAKE) -C libcolor clean
