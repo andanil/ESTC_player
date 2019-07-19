@@ -1,5 +1,5 @@
 # Sources
-SRCS = main.c actions_indication.c usbh_usr.c periph.c player.c song_list.c usbh_msc_scsi.c
+SRCS = main.c actions_indication.c usbh_usr.c periph.c player.c song_list.c 
 
 BUILD_ROOT=../..
 

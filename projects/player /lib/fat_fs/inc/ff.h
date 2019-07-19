@@ -18,7 +18,6 @@
 
 #include "integer.h"	/* Basic integer types */
 #include "ffconf.h"		/* FatFs configuration options */
-#include "diskio.h"
 
 #if _FATFS != _FFCONFIG
 #error Wrong configuration file (ffconf.h).
