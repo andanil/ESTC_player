@@ -5,11 +5,11 @@ SPL_PATH = $(BUILD_ROOT)/stm_spl/
 COMMON_PATH = $(BUILD_ROOT)/common
 LABS_DIR = $(BUILD_ROOT)/projects
 
-.PHONY: labs spl common lab1 clean
+.PHONY: labs spl common lab clean
 
 all: labs
 
-labs: lab1
+labs: lab
 
 spl:
 	make -C $(SPL_PATH)
@@ -17,10 +17,10 @@ spl:
 common:
 	make -C $(COMMON_PATH)
 
-lab1: spl common
-	make -C $(LABS_DIR)/led_test
+lab: spl common
+	make -C $(LABS_DIR)/player
 
 clean:
 	make -C $(SPL_PATH) clean
 	make -C $(COMMON_PATH) clean
-	make -C $(LABS_DIR)/led_test clean
+	make -C $(LABS_DIR)/player clean

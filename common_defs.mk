@@ -27,6 +27,7 @@ INCLUDE_DIRS += -I$(BUILD_ROOT)/stm_spl/CMSIS/ST/inc
 INCLUDE_DIRS += -I$(BUILD_ROOT)/stm_spl/STM32F4xx/inc
 INCLUDE_DIRS += -I$(BUILD_ROOT)/common/include
 
+
 ###############################################################################
 #                                  C Defines                                  #
 ###############################################################################
