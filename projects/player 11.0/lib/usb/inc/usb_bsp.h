@@ -26,6 +26,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usb_core.h"
 #include "stm32f4xx.h"
+#include "usb_hcd_int.h"
 
 /** @addtogroup USB_OTG_DRIVER
   * @{

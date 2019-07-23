@@ -19,6 +19,7 @@ typedef enum {
 void TIM5_Init(void);
 void PlayFile(struct List *song, FRESULT fresult);
 void TIM5_IRQHandler(void);
-uint8_t OpenDir(struct List *first, struct List *last,  FRESULT fresult, const char *path);
+uint8_t OpenDir(struct List *first, struct List *last,  FRESULT fresult, char *path);
+void PlayByteArray(uint16_t *start_pos, uint32_t size);
 
 #endif /* PLAYER_H */

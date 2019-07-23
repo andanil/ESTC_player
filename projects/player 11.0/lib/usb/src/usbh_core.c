@@ -210,7 +210,7 @@ USBH_Status USBH_DeInit(USB_OTG_CORE_HANDLE *pdev, USBH_HOST *phost)
 void USBH_Process(USB_OTG_CORE_HANDLE *pdev , USBH_HOST *phost)
 {
   volatile USBH_Status status = USBH_FAIL;
-    
+
   switch (phost->gState)
   {
   case HOST_ISSUE_CORE_RESET :
@@ -315,6 +315,7 @@ void USBH_Process(USB_OTG_CORE_HANDLE *pdev , USBH_HOST *phost)
   case HOST_CLASS:   
     /* process class state machine */
     status = phost->class_cb->Machine(pdev, phost);
+    phost->usr_cb->USBH_USR_MSC_Application();
     USBH_ErrorHandle(phost, status);
     break;       
     

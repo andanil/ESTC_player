@@ -9,7 +9,7 @@ CFLAGS = -Iinc
 CFLAGS += -I../usb/inc
 
 # Sources
-SRCS = ff.c fattime.c ccsbcs.c 
+SRCS = fattime.c ccsbcs.c ff.c
 
 OBJS = $(SRCS:.c=.o)
 

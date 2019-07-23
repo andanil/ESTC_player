@@ -22,10 +22,12 @@ USBH_Usr_cb_TypeDef USR_Callbacks =
   USBH_USR_UnrecoveredError
 };
 
-extern volatile uint8_t result;
 FATFS fatfs;
 extern USB_OTG_CORE_HANDLE          USB_OTG_Core;
 
+struct List *first=0, *last=0, *current;
+FRESULT fresult;
+extern volatile uint8_t number_of_songs;
 
 void USBH_USR_Init(void)
 {
@@ -93,7 +95,6 @@ void USBH_USR_SerialNum_String(void *SerialNumString)
 void USBH_USR_EnumerationDone(void)
 {
   USB_OTG_BSP_mDelay(500);
-  USBH_USR_MSC_Application();
 } 
 
 void USBH_USR_DeviceNotSupported(void)
@@ -115,12 +116,27 @@ int USBH_USR_MSC_Application(void)
 {
   if (f_mount( 0, &fatfs ) != FR_OK ) 
   {
-    result = 0;
     SetErrorLight();
   }
   else
   {
-    result = 1;
+      if(OpenDir(first, last, fresult, "0:/")==0 || first==0)
+      {
+        SetErrorLight();
+      }
+      else
+      {
+        last->next = first;
+        current = first;
+        PeriphInit(I2S_AudioFreq_48k);
+        TIM5_Init();
+        while(1)
+        {
+          SetPlayLight();
+          PlayFile(current, fresult);
+          current = current->next;
+        }
+      }
   }
   return 0;
 }

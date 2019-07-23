@@ -2,6 +2,10 @@
 
 volatile uint8_t State, pause = AUDIO_MUTE_OFF, change_song = 0, volume = 50;
 volatile uint8_t number_of_songs = 0;
+uint16_t* start_pos;
+volatile uint16_t* current_pos;
+uint32_t AudioTotalSize = 0xFFFF; 
+volatile uint32_t AudioRemSize   = 0xFFFF;
 uint8_t isWAVFile(FILINFO fileInfo);
 
 uint8_t isWAVFile(FILINFO fileInfo)
@@ -20,7 +24,7 @@ uint8_t isWAVFile(FILINFO fileInfo)
   return 0;
 }
 
-uint8_t OpenDir(struct List *first, struct List *last,  FRESULT fresult, const char *path)
+uint8_t OpenDir(struct List *first, struct List *last,  FRESULT fresult, char *path)
 {
   DIR Dir;
   FILINFO fileInfo;
@@ -63,6 +67,7 @@ void PlayFile(struct List *song, FRESULT fresult)
   FIL file;
   if( f_open( &file, temporary_song->file.fname, FA_READ) == FR_OK )
   {
+    Codec_SetVolume(VOLUME_CONVERT(volume));
     fresult = f_lseek(&file, 44);
     volatile ITStatus it_status;
     change_song=0;
@@ -79,6 +84,17 @@ void PlayFile(struct List *song, FRESULT fresult)
     }
     fresult = f_close(&file);
   }
+}
+
+void PlayByteArray(uint16_t *begin_pos, uint32_t size)
+{
+  Codec_SetVolume(VOLUME_CONVERT(volume));
+  AudioTotalSize = size;
+  AudioRemSize = (size/2) - DMA_MAX(AudioTotalSize);
+  current_pos = begin_pos + DMA_MAX(AudioTotalSize);
+  start_pos = begin_pos + DMA_MAX(AudioTotalSize);
+  SetPlayLight();
+  Init_DMA_ForByteArray(DMA_MAX(AudioRemSize));
 }
 
 void TIM5_Init(void)
@@ -114,6 +130,7 @@ void TIM5_IRQHandler(void)
         	pause = AUDIO_MUTE_ON;
         	Codec_WriteRegister(CODEC_MAP_PWR_CTRL2, CODEC_MUTE_ON);
         	Codec_WriteRegister(CODEC_MAP_PWR_CTRL1, CODEC_POWER_DOWN);
+                NVIC_DisableIRQ(DMA1_Stream7_IRQn);
         	SetPauseLight();
         }
         else
@@ -121,6 +138,7 @@ void TIM5_IRQHandler(void)
         	pause = AUDIO_MUTE_OFF;
         	Codec_WriteRegister(CODEC_MAP_PWR_CTRL2, CODEC_HEADPHONE_DEVICE);
         	Codec_WriteRegister(CODEC_MAP_PWR_CTRL1, CODEC_POWER_ON);
+                NVIC_EnableIRQ(DMA1_Stream7_IRQn);
         	SetPlayLight();
         }
         break;
@@ -129,11 +147,11 @@ void TIM5_IRQHandler(void)
         break;
       case AUDIO_VOLUME_UP:
         volume += VolumeStep;
-        Codec_SetVolume(volume);
+        Codec_SetVolume(VOLUME_CONVERT(volume));
         break;
       case AUDIO_VOLUME_DOWN:
         volume -= VolumeStep;
-        Codec_SetVolume(volume);
+        Codec_SetVolume(VOLUME_CONVERT(volume));
         break;
     }
     State = -1;

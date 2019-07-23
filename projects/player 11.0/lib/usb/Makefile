@@ -7,8 +7,8 @@ CFLAGS = -Iinc -I../../inc -I../fat_fs/inc
 
 # Sources
 SRCS = usb_bsp.c usb_core.c usb_dcd.c usb_dcd_int.c usb_hcd.c usb_hcd_int.c
-SRCS += usbh_core.c usbh_hcs.c usbh_ioreq.c usbh_msc_bot.c
-SRCS += usbh_msc_core.c  usbh_stdreq.c usbh_msc_fatfs.c usbh_msc_scsi.c usb_otg.c
+SRCS += usbh_core.c usbh_hcs.c usbh_ioreq.c 
+SRCS += usbh_msc_core.c usbh_msc_bot.c usbh_msc_scsi.c usbh_stdreq.c usbh_msc_fatfs.c usb_otg.c
 
 OBJS = $(SRCS:.c=.o)
 
