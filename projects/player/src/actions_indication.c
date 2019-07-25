@@ -1,19 +1,16 @@
 #include "actions_indication.h"
 
 void Init_Tim3Inter(void);
-void Init_TIM3(int period, int prescaler);
+void Init_TIM3(uint32_t period, uint32_t prescaler);
 void LedsInit(void);
 void ButtonsInit(void);
 void Init_ButtonInter(void);
-
-extern uint8_t State;
 
 void EXTI0_IRQHandler(void) 
 {
   if(EXTI_GetITStatus(EXTI_Line0)!= RESET)
   {
-    State = AUDIO_NEXT;
-    TIM_Cmd(TIM5, ENABLE);
+    Player_ChangeSong();
     SetCommandLight();
     EXTI_ClearITPendingBit(EXTI_Line0);
   }
@@ -23,8 +20,7 @@ void EXTI1_IRQHandler(void)
 {
   if(EXTI_GetITStatus(EXTI_Line1)!= RESET)
   {
-    State = AUDIO_VOLUME_UP;
-    TIM_Cmd(TIM5, ENABLE);
+    Player_VolumeUp();
     SetCommandLight();
     EXTI_ClearITPendingBit(EXTI_Line1);
   }
@@ -34,8 +30,7 @@ void EXTI2_IRQHandler(void)
 {
   if(EXTI_GetITStatus(EXTI_Line2)!= RESET)
   {
-    State = AUDIO_VOLUME_DOWN;
-    TIM_Cmd(TIM5, ENABLE);
+    Player_VolumeDown();
     SetCommandLight();
     EXTI_ClearITPendingBit(EXTI_Line2);
   }
@@ -45,7 +40,7 @@ void EXTI3_IRQHandler(void)
 {
   if(EXTI_GetITStatus(EXTI_Line3)!= RESET)
   {
-    State = AUDIO_PAUSE;
+    Player_Toggle();
     TIM_Cmd(TIM5, ENABLE);
     EXTI_ClearITPendingBit(EXTI_Line3);
   }
@@ -62,12 +57,12 @@ void TIM3_IRQHandler(void)
   }
 }
 
-void Indic_Init(int period, int prescaler)
+void Indic_Init(uint32_t time_ms)
 {
   LedsInit();
   ButtonsInit();
-  Init_ButtonInter();
-  Init_TIM3(period, prescaler);
+  Init_ButtonInter();  
+  Init_TIM3(1400, (uint32_t)time_ms*SYSCLK/28);
   Init_Tim3Inter();
 }
 
@@ -174,12 +169,12 @@ void Init_ButtonInter(void)
   NVIC_Init(&nvic_struct_for_EXTI);
 }
 
-void Init_TIM3(int period, int prescaler)
+void Init_TIM3(uint32_t period, uint32_t prescaler)
 {
   TIM_TimeBaseInitTypeDef tim_struct;
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
-  tim_struct.TIM_Period = period;
-  tim_struct.TIM_Prescaler = prescaler;
+  tim_struct.TIM_Period = period-1;
+  tim_struct.TIM_Prescaler = prescaler-1;
   tim_struct.TIM_ClockDivision = 0;
   tim_struct.TIM_CounterMode = TIM_CounterMode_Up;
   TIM_TimeBaseInit(TIM3, &tim_struct);

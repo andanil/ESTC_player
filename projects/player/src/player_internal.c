@@ -1,16 +1,17 @@
-#include "periph.h"
+#include "player_internal.h"
 
 void CodecI2S_Init(uint32_t AudioFreq);
 void Codec_CS42L22Init(void);
 void CodecGPIO_Init(void);
 void CodecI2C_Init(void);
 
-uint16_t sample_buffer[2048];
+static uint16_t sample_buffer[2048];
 
-extern uint16_t* start_pos;
-extern volatile uint16_t* current_pos;
-extern uint32_t AudioTotalSize; 
-extern volatile uint32_t AudioRemSize;
+static uint16_t* start_pos;
+static volatile uint16_t* current_pos;
+static uint32_t AudioTotalSize; 
+static volatile uint32_t AudioRemSize;
+
 DMA_InitTypeDef  DMA_InitStructure;
 
 void Codec_SetVolume(uint8_t Volume)
@@ -218,8 +219,13 @@ void Init_DMA(void)
   SPI_Cmd(SPI3,ENABLE);
 }
 
-void Init_DMA_ForByteArray(uint32_t size)
+void Init_DMA_ForByteArray(uint16_t *begin_pos, uint32_t size)
 {
+  AudioTotalSize = size;
+  AudioRemSize = (size/2) - DMA_MAX(AudioTotalSize);
+  current_pos = begin_pos + DMA_MAX(AudioTotalSize);
+  start_pos = begin_pos;
+
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
   DMA_Cmd(AUDIO_I2S_DMA_STREAM, DISABLE);
   DMA_DeInit(AUDIO_I2S_DMA_STREAM);
@@ -228,7 +234,7 @@ void Init_DMA_ForByteArray(uint32_t size)
   DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
   DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
   DMA_InitStructure.DMA_Priority = DMA_Priority_High;
-  DMA_InitStructure.DMA_BufferSize = size;
+  DMA_InitStructure.DMA_BufferSize = (uint32_t)(DMA_MAX(AudioRemSize));
   DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)current_pos;
   DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)(&(SPI3->DR));
   DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
@@ -272,9 +278,7 @@ void DMA1_Stream7_IRQHandler(void)
     {    
       DMA_Cmd(AUDIO_I2S_DMA_STREAM, DISABLE);      
       DMA_ClearFlag(AUDIO_I2S_DMA_STREAM, DMA_FLAG_TCIF7);
-      AudioRemSize = (AudioTotalSize/2) - DMA_MAX(AudioTotalSize);
-      current_pos = start_pos; 
-      Init_DMA_ForByteArray(DMA_MAX(AudioRemSize));  
+      Init_DMA_ForByteArray(start_pos, AudioTotalSize);  
     }
   }
 }

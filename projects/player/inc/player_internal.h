@@ -86,7 +86,7 @@ uint8_t Codec_WriteRegister(uint32_t RegisterAddr, uint32_t RegisterValue);
 uint8_t Codec_ReadRegister(uint32_t RegisterAddr);
 uint8_t DMA_Read_Send(FRESULT fresult, int position, volatile ITStatus it_status, UINT read_bytes, uint32_t DMA_FLAG, uint8_t change_song);
 void Codec_SetVolume(uint8_t Volume);
-void Init_DMA_ForByteArray(uint32_t size);
+void Init_DMA_ForByteArray(uint16_t *begin_pos, uint32_t size);
 void Init_DMA(void);
 void DMA1_Stream7_IRQHandler(void);
 

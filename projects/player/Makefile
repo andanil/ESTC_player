@@ -1,5 +1,5 @@
 # Sources
-SRCS = main.c actions_indication.c periph.c player.c audio.c
+SRCS = main.c actions_indication.c player_internal.c player.c audio.c 
 
 BUILD_ROOT=../..
 

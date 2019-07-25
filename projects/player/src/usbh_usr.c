@@ -129,7 +129,7 @@ int USBH_USR_MSC_Application(void)
         last->next = first;
         current = first;
         PeriphInit(I2S_AudioFreq_48k);
-        TIM5_Init();
+        Init_DMA();
         while(1)
         {
           SetPlayLight();

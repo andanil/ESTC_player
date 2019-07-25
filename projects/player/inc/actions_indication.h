@@ -8,7 +8,7 @@
 #include "stm32f4xx_rcc.h"
 #include "player.h"
 
-void Indic_Init(int period, int prescaler);
+void Indic_Init(uint32_t time_ms);
 void SetErrorLight(void);
 void SetFixErrorLight(void);
 void ResetCommandLight(void);

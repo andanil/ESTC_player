@@ -8,7 +8,7 @@ USBH_HOST USB_Host;
 int main(void)
 {
   SystemInit(); 
-  Indic_Init(1400-1, 30000-1); 
+  Indic_Init(500); 
   USBH_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USB_Host, &USBH_MSC_cb, &USR_Callbacks);
   while(1)
   {

@@ -1,12 +1,45 @@
 #include "player.h"
 
-volatile uint8_t State, pause = AUDIO_MUTE_OFF, change_song = 0, volume = 50;
-volatile uint8_t number_of_songs = 0;
-uint16_t* start_pos;
-volatile uint16_t* current_pos;
-uint32_t AudioTotalSize = 0xFFFF; 
-volatile uint32_t AudioRemSize   = 0xFFFF;
+static volatile uint8_t pause = AUDIO_MUTE_OFF, change_song = 0, volume = 50;
+static volatile uint8_t number_of_songs = 0;
 uint8_t isWAVFile(FILINFO fileInfo);
+
+void Player_VolumeUp(void)
+{
+  volume += VolumeStep;
+  Codec_SetVolume(VOLUME_CONVERT(volume));
+}
+
+void Player_VolumeDown(void)
+{
+  volume -= VolumeStep;
+  Codec_SetVolume(VOLUME_CONVERT(volume));
+}
+
+void Player_Toggle(void)
+{
+  if (pause == AUDIO_MUTE_OFF)
+  {
+    pause = AUDIO_MUTE_ON;
+    Codec_WriteRegister(CODEC_MAP_PWR_CTRL2, CODEC_MUTE_ON);
+    Codec_WriteRegister(CODEC_MAP_PWR_CTRL1, CODEC_POWER_DOWN);
+    NVIC_DisableIRQ(DMA1_Stream7_IRQn);
+    SetPauseLight();
+  }
+  else
+  {
+    pause = AUDIO_MUTE_OFF;
+    Codec_WriteRegister(CODEC_MAP_PWR_CTRL2, CODEC_HEADPHONE_DEVICE);
+    Codec_WriteRegister(CODEC_MAP_PWR_CTRL1, CODEC_POWER_ON);
+    NVIC_EnableIRQ(DMA1_Stream7_IRQn);
+    SetPlayLight();
+  }
+}
+
+void Player_ChangeSong(void)
+{
+  change_song = 1;
+}
 
 uint8_t isWAVFile(FILINFO fileInfo)
 {
@@ -89,74 +122,6 @@ void PlayFile(struct List *song, FRESULT fresult)
 void PlayByteArray(uint16_t *begin_pos, uint32_t size)
 {
   Codec_SetVolume(VOLUME_CONVERT(volume));
-  AudioTotalSize = size;
-  AudioRemSize = (size/2) - DMA_MAX(AudioTotalSize);
-  current_pos = begin_pos + DMA_MAX(AudioTotalSize);
-  start_pos = begin_pos + DMA_MAX(AudioTotalSize);
   SetPlayLight();
-  Init_DMA_ForByteArray(DMA_MAX(AudioRemSize));
-}
-
-void TIM5_Init(void)
-{
-  TIM_TimeBaseInitTypeDef tim_struct;
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
-  tim_struct.TIM_Period = 8400-1;
-  tim_struct.TIM_Prescaler = 3000-1;
-  tim_struct.TIM_ClockDivision = 0;
-  tim_struct.TIM_CounterMode = TIM_CounterMode_Up;
-  TIM_TimeBaseInit(TIM5, &tim_struct);
-  TIM_Cmd(TIM5, DISABLE);
-
-  NVIC_InitTypeDef nvic_struct;
-  nvic_struct.NVIC_IRQChannel = TIM5_IRQn;
-  nvic_struct.NVIC_IRQChannelPreemptionPriority = 0;
-  nvic_struct.NVIC_IRQChannelSubPriority = 1;
-  nvic_struct.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&nvic_struct);
-  TIM_ITConfig(TIM5, TIM_IT_Update, ENABLE);
-  TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
-} 
-
-void TIM5_IRQHandler(void)
-{
-  if(TIM_GetITStatus(TIM5, TIM_IT_Update)!= RESET)
-  {		
-    switch (State) 
-    {
-      case AUDIO_PAUSE:
-        if (pause == AUDIO_MUTE_OFF)
-        {
-        	pause = AUDIO_MUTE_ON;
-        	Codec_WriteRegister(CODEC_MAP_PWR_CTRL2, CODEC_MUTE_ON);
-        	Codec_WriteRegister(CODEC_MAP_PWR_CTRL1, CODEC_POWER_DOWN);
-                NVIC_DisableIRQ(DMA1_Stream7_IRQn);
-        	SetPauseLight();
-        }
-        else
-        {
-        	pause = AUDIO_MUTE_OFF;
-        	Codec_WriteRegister(CODEC_MAP_PWR_CTRL2, CODEC_HEADPHONE_DEVICE);
-        	Codec_WriteRegister(CODEC_MAP_PWR_CTRL1, CODEC_POWER_ON);
-                NVIC_EnableIRQ(DMA1_Stream7_IRQn);
-        	SetPlayLight();
-        }
-        break;
-      case AUDIO_NEXT:
-        change_song = 1;
-        break;
-      case AUDIO_VOLUME_UP:
-        volume += VolumeStep;
-        Codec_SetVolume(VOLUME_CONVERT(volume));
-        break;
-      case AUDIO_VOLUME_DOWN:
-        volume -= VolumeStep;
-        Codec_SetVolume(VOLUME_CONVERT(volume));
-        break;
-    }
-    State = -1;
-    TIM_Cmd(TIM5, DISABLE);
-    TIM_SetCounter(TIM5, 0);
-    TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
-  }
+  Init_DMA_ForByteArray(begin_pos, size);
 }
