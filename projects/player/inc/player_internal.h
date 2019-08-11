@@ -7,7 +7,7 @@
 #include "stm32f4xx_rcc.h"
 #include "stm32f4xx_i2c.h"
 #include "stm32f4xx_spi.h"
-#include "actions_indication.h"
+#include <stdlib.h>
 
 // pins to codec
 #define I2S3_WS_PIN 	GPIO_Pin_4  //port A
@@ -27,6 +27,8 @@
 #define CORE_I2C_ADDRESS  0x33
 #define CODEC_I2C_ADDRESS 0x94
 
+#define I2C_SPEED 100000
+
 #define CODEC_I2S_ADDRESS 0x40003C0C
 
 #define DMA_MAX_SZE                    0xFFFF
@@ -35,6 +37,7 @@
 #define VOLUME_CONVERT(x)    ((x > 100)? 100:((uint8_t)((x * 255) / 100)))
 
 #define AUDIO_I2S_DMA_STREAM  DMA1_Stream7
+#define AUDIO_USB_I2S_DMA_STREAM  DMA1_Stream5
 
 // register map bytes for CS42L22
 #define CODEC_MAP_CHIP_ID   0x01
@@ -84,10 +87,10 @@
 void PeriphInit(uint32_t AudioFreq);
 uint8_t Codec_WriteRegister(uint32_t RegisterAddr, uint32_t RegisterValue);
 uint8_t Codec_ReadRegister(uint32_t RegisterAddr);
-uint8_t DMA_Read_Send(FRESULT fresult, int position, volatile ITStatus it_status, UINT read_bytes, uint32_t DMA_FLAG, uint8_t change_song);
+uint8_t DMA_Read_Send(FRESULT fresult, uint16_t *begin_pos, volatile ITStatus it_status, UINT read_bytes, uint32_t DMA_FLAG, uint8_t change_song);
 void Codec_SetVolume(uint8_t Volume);
 void Init_DMA_ForByteArray(uint16_t *begin_pos, uint32_t size);
-void Init_DMA(void);
+void Init_DMA(uint16_t *begin_pos);
 void DMA1_Stream7_IRQHandler(void);
 
 #endif /* PERIPH_H */

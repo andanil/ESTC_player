@@ -5,8 +5,6 @@ void Codec_CS42L22Init(void);
 void CodecGPIO_Init(void);
 void CodecI2C_Init(void);
 
-static uint16_t sample_buffer[2048];
-
 static uint16_t* start_pos;
 static volatile uint16_t* current_pos;
 static uint32_t AudioTotalSize; 
@@ -28,7 +26,7 @@ void Codec_SetVolume(uint8_t Volume)
   }
 }
 
-uint8_t DMA_Read_Send(FRESULT fresult, int position, volatile ITStatus it_status, UINT read_bytes, uint32_t DMA_FLAG, uint8_t change_song)
+uint8_t DMA_Read_Send(FRESULT fresult, uint16_t *begin_pos, volatile ITStatus it_status, UINT read_bytes, uint32_t DMA_FLAG, uint8_t change_song)
 {
   FIL file;
   it_status = RESET;
@@ -36,7 +34,7 @@ uint8_t DMA_Read_Send(FRESULT fresult, int position, volatile ITStatus it_status
   {
 	it_status = DMA_GetFlagStatus(DMA1_Stream5, DMA_FLAG);
   }
-  fresult = f_read (&file,&sample_buffer[position],1024*2,&read_bytes);
+  fresult = f_read (&file,begin_pos,1024*2,&read_bytes);
   DMA_ClearFlag(DMA1_Stream5, DMA_FLAG);
   if(fresult != FR_OK)
   {
@@ -127,7 +125,7 @@ void Codec_CS42L22Init(void)
 void CodecGPIO_Init(void)
 {
   GPIO_InitTypeDef PinInitStruct;
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA| RCC_AHB1Periph_GPIOB|RCC_AHB1Periph_GPIOC|RCC_AHB1Periph_GPIOD, ENABLE);
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB|RCC_AHB1Periph_GPIOC|RCC_AHB1Periph_GPIOD, ENABLE);
 
   //Reset pin as GPIO
   PinInitStruct.GPIO_Pin = CODEC_RESET_PIN;
@@ -168,7 +166,7 @@ void CodecI2C_Init(void)
   I2C_InitTypeDef I2C_InitType;
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
   I2C_DeInit(CODEC_I2C);
-  I2C_InitType.I2C_ClockSpeed = 100000;
+  I2C_InitType.I2C_ClockSpeed = I2C_SPEED;
   I2C_InitType.I2C_Mode = I2C_Mode_I2C;
   I2C_InitType.I2C_OwnAddress1 = CORE_I2C_ADDRESS;
   I2C_InitType.I2C_Ack = I2C_Ack_Enable;
@@ -194,16 +192,18 @@ void CodecI2S_Init(uint32_t AudioFreq)
   I2S_Cmd(CODEC_I2S, ENABLE);
 }
 
-void Init_DMA(void)
+void Init_DMA(uint16_t *begin_pos)
 {
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
-  DMA_DeInit(DMA1_Stream5);
+  DMA_Cmd(AUDIO_USB_I2S_DMA_STREAM, DISABLE);
+  DMA_DeInit(AUDIO_USB_I2S_DMA_STREAM);
+  SPI_I2S_DMACmd(SPI3,SPI_I2S_DMAReq_Tx,DISABLE);
   DMA_InitStructure.DMA_Channel = DMA_Channel_0;
   DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
   DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
   DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
   DMA_InitStructure.DMA_BufferSize = 2048;
-  DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)&sample_buffer;
+  DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)begin_pos;
   DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)(&(SPI3->DR));
   DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
   DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
@@ -213,10 +213,10 @@ void Init_DMA(void)
   DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
   DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
   DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_HalfFull;
-  DMA_Init(DMA1_Stream5, &DMA_InitStructure);
-  DMA_Cmd(DMA1_Stream5, ENABLE);
+  DMA_Init(AUDIO_USB_I2S_DMA_STREAM, &DMA_InitStructure);
   SPI_I2S_DMACmd(SPI3,SPI_I2S_DMAReq_Tx,ENABLE);
   SPI_Cmd(SPI3,ENABLE);
+  DMA_Cmd(AUDIO_USB_I2S_DMA_STREAM, ENABLE);
 }
 
 void Init_DMA_ForByteArray(uint16_t *begin_pos, uint32_t size)

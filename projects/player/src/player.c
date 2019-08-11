@@ -23,7 +23,7 @@ void Player_Toggle(void)
     pause = AUDIO_MUTE_ON;
     Codec_WriteRegister(CODEC_MAP_PWR_CTRL2, CODEC_MUTE_ON);
     Codec_WriteRegister(CODEC_MAP_PWR_CTRL1, CODEC_POWER_DOWN);
-    NVIC_DisableIRQ(DMA1_Stream7_IRQn);
+    //NVIC_DisableIRQ(AUDIO_I2S_DMA_STREAM);
     SetPauseLight();
   }
   else
@@ -31,7 +31,7 @@ void Player_Toggle(void)
     pause = AUDIO_MUTE_OFF;
     Codec_WriteRegister(CODEC_MAP_PWR_CTRL2, CODEC_HEADPHONE_DEVICE);
     Codec_WriteRegister(CODEC_MAP_PWR_CTRL1, CODEC_POWER_ON);
-    NVIC_EnableIRQ(DMA1_Stream7_IRQn);
+    //NVIC_EnableIRQ(AUDIO_I2S_DMA_STREAM);
     SetPlayLight();
   }
 }
@@ -93,7 +93,7 @@ uint8_t OpenDir(struct List *first, struct List *last,  FRESULT fresult, char *p
   }
 }
 
-void PlayFile(struct List *song, FRESULT fresult)
+void PlayFile(struct List *song, FRESULT fresult, uint16_t *begin_pos)
 {
   struct List *temporary_song=song;
   UINT read_bytes;
@@ -106,11 +106,11 @@ void PlayFile(struct List *song, FRESULT fresult)
     change_song=0;
     while(1)
     {
-      if (DMA_Read_Send(fresult,0, it_status, read_bytes, DMA_FLAG_HTIF5, change_song)==0)
+      if (DMA_Read_Send(fresult,begin_pos, it_status, read_bytes, DMA_FLAG_HTIF5, change_song)==0)
       {
 	    break;
       }
-      if (DMA_Read_Send(fresult, 1024, it_status, read_bytes, DMA_FLAG_TCIF5, change_song)==0)
+      if (DMA_Read_Send(fresult, begin_pos+1024, it_status, read_bytes, DMA_FLAG_TCIF5, change_song)==0)
       {
 	    break;
       }

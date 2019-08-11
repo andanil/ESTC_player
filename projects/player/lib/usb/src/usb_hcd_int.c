@@ -19,8 +19,6 @@
   ******************************************************************************
   */
 
-#include "usb_conf.h"
-#ifdef USE_HOST_MODE
 /* Includes ------------------------------------------------------------------*/
 #include "usb_core.h"
 #include "usb_defines.h"
@@ -829,7 +827,6 @@ static uint32_t USB_OTG_USBH_handle_IncompletePeriodicXfer_ISR (USB_OTG_CORE_HAN
 /**
 * @}
 */
-#endif
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
 

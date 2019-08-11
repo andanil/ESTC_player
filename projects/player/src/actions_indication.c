@@ -124,7 +124,6 @@ void ButtonsInit(void)
   GPIO_Init(GPIOA, &UserButton);
 
   GPIO_InitTypeDef GPIO_InitStructureBN;
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
   GPIO_InitStructureBN.GPIO_Pin   = GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
   GPIO_InitStructureBN.GPIO_Mode  = GPIO_Mode_IN;
   GPIO_InitStructureBN.GPIO_OType = GPIO_OType_PP;

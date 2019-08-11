@@ -12,7 +12,7 @@ typedef enum {
 
 #define VolumeStep 5
 
-void PlayFile(struct List *song, FRESULT fresult);
+void PlayFile(struct List *song, FRESULT fresult, uint16_t *begin_pos);
 uint8_t OpenDir(struct List *first, struct List *last,  FRESULT fresult, char *path);
 void PlayByteArray(uint16_t *start_pos, uint32_t size);
 void Player_VolumeUp(void);

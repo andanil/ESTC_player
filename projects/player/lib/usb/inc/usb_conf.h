@@ -55,7 +55,7 @@
 #endif /* USE_USB_OTG_HS */
 
 #ifndef USE_ULPI_PHY
-#define USE_ULPI_PHY
+ //#define USE_ULPI_PHY
 #endif /* USE_ULPI_PHY */
 
 #ifndef USE_EMBEDDED_PHY

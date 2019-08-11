@@ -1,16 +1,19 @@
-﻿#ifndef USH_USR_H
+#ifndef USH_USR_H
 #define USH_USR_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
+#include "ff.h"
 #include "usbh_core.h"
 #include <stdio.h>
 #include "usbh_msc_core.h"
 #include "actions_indication.h"
 #include "player.h"
 
-#define BUFFER_SIZE        ((uint16_t)512*64)  
-
-#define USH_USR_FS_INIT   0
-#define USH_USR_AUDIO    1
+#define USH_USR_FS_INIT    ((uint8_t)0x00)
+#define USH_USR_AUDIO      ((uint8_t)0x01)
 
 extern  USBH_Usr_cb_TypeDef USR_Callbacks;
 
@@ -35,6 +38,8 @@ void USBH_USR_DeInit(void);
 void USBH_USR_DeviceNotSupported(void);
 void USBH_USR_UnrecoveredError(void);
 
-#endif /* USH_USR_H */
+#ifdef __cplusplus
+}
+#endif
 
-
+#endif /*USH_USR_H*/

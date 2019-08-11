@@ -6,10 +6,10 @@ vpath %.c src/option
 
 # Includes
 CFLAGS = -Iinc
-CFLAGS += -I../usb/inc
+CFLAGS += -I../usb/inc -I../../inc
 
 # Sources
-SRCS = fattime.c ccsbcs.c ff.c
+SRCS = fattime.c ff.c
 
 OBJS = $(SRCS:.c=.o)
 

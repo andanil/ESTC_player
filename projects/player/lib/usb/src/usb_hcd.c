@@ -19,8 +19,6 @@
   ******************************************************************************
   */
 
-#include "usb_conf.h"
-#ifdef USE_HOST_MODE
 /* Includes ------------------------------------------------------------------*/
 #include "usb_core.h"
 #include "usb_hcd.h"
@@ -254,6 +252,5 @@ uint32_t HCD_SubmitRequest (USB_OTG_CORE_HANDLE *pdev , uint8_t hc_num)
 /**
 * @}
 */
-#endif
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

@@ -25,8 +25,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usb_core.h"
-#include "stm32f4xx.h"
 #include "usb_hcd_int.h"
+#include "stm32f4xx_conf.h"
 
 /** @addtogroup USB_OTG_DRIVER
   * @{
@@ -77,6 +77,9 @@ void USB_OTG_BSP_Init (USB_OTG_CORE_HANDLE *pdev);
 void USB_OTG_BSP_uDelay (const uint32_t usec);
 void USB_OTG_BSP_mDelay (const uint32_t msec);
 void USB_OTG_BSP_EnableInterrupt (USB_OTG_CORE_HANDLE *pdev);
+void USB_OTG_BSP_TimerIRQ(void);
+void OTG_FS_IRQHandler(void);
+void TIM2_IRQHandler(void);
 #ifdef USE_HOST_MODE
 void USB_OTG_BSP_ConfigVBUS(USB_OTG_CORE_HANDLE *pdev);
 void USB_OTG_BSP_DriveVBUS(USB_OTG_CORE_HANDLE *pdev,uint8_t state);

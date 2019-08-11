@@ -1,5 +1,5 @@
 # Sources
-SRCS = main.c actions_indication.c player_internal.c player.c audio.c 
+SRCS = main.c actions_indication.c player_internal.c player.c usbh_usr.c song_list.c
 
 BUILD_ROOT=../..
 
@@ -18,7 +18,7 @@ LIB_DIRS     += $(LIBPATHS)
 INCLUDE_DIRS += -I$(LIBPATHS)
 LIB_DIRS     += $(LIBPATHS1)
 INCLUDE_DIRS += -I$(LIBPATHS1)
-#LDLIBS       += -lfatfs -lusb
+LDLIBS       += -lfatfs -lusb
 
 # Extra includes
 CFLAGS += -Ilib/usb/inc
