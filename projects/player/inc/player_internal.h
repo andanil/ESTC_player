@@ -1,5 +1,5 @@
-#ifndef PERIPH_H
-#define PERIPH_H
+#ifndef PLAYER_INTERNAL_H
+#define PLAYER_INTERNAL_H
 
 #include "ff.h"
 #include "stm32f4xx_dma.h"
@@ -30,6 +30,8 @@
 #define I2C_SPEED 100000
 
 #define CODEC_I2S_ADDRESS 0x40003C0C
+
+#define I2S_ENABLE_MASK                 0x0400
 
 #define DMA_MAX_SZE                    0xFFFF
 #define DMA_MAX(x)           (((x) <= DMA_MAX_SZE)? (x):DMA_MAX_SZE)
@@ -87,10 +89,9 @@
 void PeriphInit(uint32_t AudioFreq);
 uint8_t Codec_WriteRegister(uint32_t RegisterAddr, uint32_t RegisterValue);
 uint8_t Codec_ReadRegister(uint32_t RegisterAddr);
-uint8_t DMA_Read_Send(FRESULT fresult, uint16_t *begin_pos, volatile ITStatus it_status, UINT read_bytes, uint32_t DMA_FLAG, uint8_t change_song);
+uint8_t DMA_Read_Send(FIL file, FRESULT fresult, uint16_t *begin_pos, volatile ITStatus it_status, uint32_t DMA_FLAG, uint8_t change_song);
 void Codec_SetVolume(uint8_t Volume);
-void Init_DMA_ForByteArray(uint16_t *begin_pos, uint32_t size);
-void Init_DMA(uint16_t *begin_pos);
+void DMA_Play(uint16_t *begin_pos, uint32_t size);
 void DMA1_Stream7_IRQHandler(void);
 
-#endif /* PERIPH_H */
+#endif /* PLAYER_INTERNAL_H */

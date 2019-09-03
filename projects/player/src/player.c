@@ -2,7 +2,26 @@
 
 static volatile uint8_t pause = AUDIO_MUTE_OFF, change_song = 0, volume = 50;
 static volatile uint8_t number_of_songs = 0;
+
+static ErrorCode file_status = Unvalid_RIFF_ID;
+static uint8_t speech_data_offset = 0x00;
+uint16_t buffer1[_MAX_SS] ={0x00};
+uint16_t buffer2[_MAX_SS] ={0x00};
+static uint32_t data_length = 0;
+WAVE_FormatTypeDef wave_format;
+static uint32_t XferCplt = 0;
+static uint8_t buffer_switch = 1;
+static FIL file;
+UINT read_bytes;
+extern USB_OTG_CORE_HANDLE          USB_OTG_Core;
 uint8_t isWAVFile(FILINFO fileInfo);
+
+void Player_Stop(void)
+{
+  DMA_Cmd(AUDIO_I2S_DMA_STREAM, DISABLE);
+  DMA_ClearFlag(AUDIO_I2S_DMA_STREAM, DMA_FLAG_TCIF7);
+  I2S_Cmd(CODEC_I2S, DISABLE);
+}
 
 void Player_VolumeUp(void)
 {
@@ -23,7 +42,7 @@ void Player_Toggle(void)
     pause = AUDIO_MUTE_ON;
     Codec_WriteRegister(CODEC_MAP_PWR_CTRL2, CODEC_MUTE_ON);
     Codec_WriteRegister(CODEC_MAP_PWR_CTRL1, CODEC_POWER_DOWN);
-    //NVIC_DisableIRQ(AUDIO_I2S_DMA_STREAM);
+    NVIC_DisableIRQ(DMA1_Stream7_IRQn);
     SetPauseLight();
   }
   else
@@ -31,7 +50,7 @@ void Player_Toggle(void)
     pause = AUDIO_MUTE_OFF;
     Codec_WriteRegister(CODEC_MAP_PWR_CTRL2, CODEC_HEADPHONE_DEVICE);
     Codec_WriteRegister(CODEC_MAP_PWR_CTRL1, CODEC_POWER_ON);
-    //NVIC_EnableIRQ(AUDIO_I2S_DMA_STREAM);
+    NVIC_EnableIRQ(DMA1_Stream7_IRQn);
     SetPlayLight();
   }
 }
@@ -93,35 +112,72 @@ uint8_t OpenDir(struct List *first, struct List *last,  FRESULT fresult, char *p
   }
 }
 
-void PlayFile(struct List *song, FRESULT fresult, uint16_t *begin_pos)
+void PlayFile(char *file_name)
 {
-  struct List *temporary_song=song;
-  UINT read_bytes;
-  FIL file;
-  if( f_open( &file, temporary_song->file.fname, FA_READ) == FR_OK )
+  buffer_switch = 1;
+  if (f_open(&file, file_name, FA_READ) != FR_OK)
   {
-    Codec_SetVolume(VOLUME_CONVERT(volume));
-    fresult = f_lseek(&file, 44);
-    volatile ITStatus it_status;
-    change_song=0;
-    while(1)
+      SetErrorLight();
+  }
+  else
+  {  
+    f_read (&file, buffer1, _MAX_SS, &read_bytes);
+    file_status = WaveParsing(&speech_data_offset, buffer1);
+    if (file_status == Valid_WAVE_File)  
     {
-      if (DMA_Read_Send(fresult,begin_pos, it_status, read_bytes, DMA_FLAG_HTIF5, change_song)==0)
+        data_length = wave_format.DataSize;
+    }
+    else 
+    {
+      while(1)
       {
-	    break;
-      }
-      if (DMA_Read_Send(fresult, begin_pos+1024, it_status, read_bytes, DMA_FLAG_TCIF5, change_song)==0)
-      {
-	    break;
+        SetErrorLight();
       }
     }
-    fresult = f_close(&file);
+    PeriphInit(wave_format.SampleRate);
+    SetPlayLight(); 
+    f_lseek(&file, speech_data_offset);
+    f_read (&file, buffer1, _MAX_SS, &read_bytes); 
+    f_read (&file, buffer2, _MAX_SS, &read_bytes);
+    DMA_Play(buffer1, _MAX_SS);
+    buffer_switch = 1;
+    XferCplt = 0;
+    while(data_length != 0)
+    { 
+      while(XferCplt == 0);
+      XferCplt = 0;
+
+      if(buffer_switch == 0)
+      {
+        DMA_Play(buffer1, _MAX_SS);
+        f_read (&file, buffer2, _MAX_SS, &read_bytes);
+        buffer_switch = 1;
+      }
+      else 
+      {   
+        DMA_Play(buffer2, 990000);
+        f_read (&file, buffer1, _MAX_SS, &read_bytes);
+        buffer_switch = 0;
+      } 
+    }
   }
+  //Player_Stop();
 }
 
 void PlayByteArray(uint16_t *begin_pos, uint32_t size)
 {
   Codec_SetVolume(VOLUME_CONVERT(volume));
   SetPlayLight();
-  Init_DMA_ForByteArray(begin_pos, size);
+  DMA_Play(begin_pos, size);
+}
+
+void Player_TransferComplete_CallBack(uint16_t *begin_pos, uint32_t size)
+{
+#ifdef MEDIA_IntFLASH
+  DMA_Play(begin_pos, size); 
+#elif defined MEDIA_USB_KEY 
+  XferCplt = 1;
+  if (data_length) data_length -= _MAX_SS;
+  if (data_length < _MAX_SS) data_length = 0;
+#endif 
 }

@@ -1,9 +1,11 @@
 #include "player_internal.h"
+#include "actions_indication.h"
 
 void CodecI2S_Init(uint32_t AudioFreq);
 void Codec_CS42L22Init(void);
 void CodecGPIO_Init(void);
 void CodecI2C_Init(void);
+void Init_DMA(void);
 
 static uint16_t* start_pos;
 static volatile uint16_t* current_pos;
@@ -26,9 +28,9 @@ void Codec_SetVolume(uint8_t Volume)
   }
 }
 
-uint8_t DMA_Read_Send(FRESULT fresult, uint16_t *begin_pos, volatile ITStatus it_status, UINT read_bytes, uint32_t DMA_FLAG, uint8_t change_song)
+uint8_t DMA_Read_Send(FIL file, FRESULT fresult, uint16_t *begin_pos, volatile ITStatus it_status, uint32_t DMA_FLAG, uint8_t change_song)
 {
-  FIL file;
+  UINT read_bytes;
   it_status = RESET;
   while(it_status == RESET)
   {
@@ -99,12 +101,13 @@ void Codec_CS42L22Init(void)
   {
 	delaycount--;
   }
+
   Codec_WriteRegister(CODEC_MAP_PWR_CTRL1, CODEC_POWER_DOWN);
   //begin initialization 
   Codec_WriteRegister(0x00, 0x99);
   Codec_WriteRegister(0x47, 0x80);
   regValue = Codec_ReadRegister(0x32);
-  Codec_WriteRegister(0x32, regValue | 0x800);
+  Codec_WriteRegister(0x32, regValue | 0x80);
   regValue = Codec_ReadRegister(0x32);
   Codec_WriteRegister(0x32, regValue & (~0x80));
   Codec_WriteRegister(0x00, 0x00);
@@ -172,15 +175,14 @@ void CodecI2C_Init(void)
   I2C_InitType.I2C_Ack = I2C_Ack_Enable;
   I2C_InitType.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
   I2C_InitType.I2C_DutyCycle = I2C_DutyCycle_2;
-  I2C_Cmd(CODEC_I2C, ENABLE);
   I2C_Init(CODEC_I2C, &I2C_InitType);
+  I2C_Cmd(CODEC_I2C, ENABLE);
 }
 
 void CodecI2S_Init(uint32_t AudioFreq)
 {
   I2S_InitTypeDef I2S_InitType;
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE);
-  RCC_PLLI2SCmd(ENABLE);
   SPI_I2S_DeInit(CODEC_I2S);
   I2S_InitType.I2S_AudioFreq = AudioFreq;
   I2S_InitType.I2S_MCLKOutput = I2S_MCLKOutput_Enable;
@@ -189,43 +191,12 @@ void CodecI2S_Init(uint32_t AudioFreq)
   I2S_InitType.I2S_Standard = I2S_Standard_Phillips;
   I2S_InitType.I2S_CPOL = I2S_CPOL_Low;
   I2S_Init(CODEC_I2S, &I2S_InitType);
-  I2S_Cmd(CODEC_I2S, ENABLE);
+  RCC_I2SCLKConfig(RCC_I2S2CLKSource_PLLI2S);
+  RCC_PLLI2SCmd(ENABLE);
 }
 
-void Init_DMA(uint16_t *begin_pos)
+void Init_DMA(void)
 {
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
-  DMA_Cmd(AUDIO_USB_I2S_DMA_STREAM, DISABLE);
-  DMA_DeInit(AUDIO_USB_I2S_DMA_STREAM);
-  SPI_I2S_DMACmd(SPI3,SPI_I2S_DMAReq_Tx,DISABLE);
-  DMA_InitStructure.DMA_Channel = DMA_Channel_0;
-  DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
-  DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
-  DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
-  DMA_InitStructure.DMA_BufferSize = 2048;
-  DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)begin_pos;
-  DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)(&(SPI3->DR));
-  DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-  DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-  DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
-  DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
-  DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-  DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
-  DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
-  DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_HalfFull;
-  DMA_Init(AUDIO_USB_I2S_DMA_STREAM, &DMA_InitStructure);
-  SPI_I2S_DMACmd(SPI3,SPI_I2S_DMAReq_Tx,ENABLE);
-  SPI_Cmd(SPI3,ENABLE);
-  DMA_Cmd(AUDIO_USB_I2S_DMA_STREAM, ENABLE);
-}
-
-void Init_DMA_ForByteArray(uint16_t *begin_pos, uint32_t size)
-{
-  AudioTotalSize = size;
-  AudioRemSize = (size/2) - DMA_MAX(AudioTotalSize);
-  current_pos = begin_pos + DMA_MAX(AudioTotalSize);
-  start_pos = begin_pos;
-
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
   DMA_Cmd(AUDIO_I2S_DMA_STREAM, DISABLE);
   DMA_DeInit(AUDIO_I2S_DMA_STREAM);
@@ -234,8 +205,8 @@ void Init_DMA_ForByteArray(uint16_t *begin_pos, uint32_t size)
   DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
   DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
   DMA_InitStructure.DMA_Priority = DMA_Priority_High;
-  DMA_InitStructure.DMA_BufferSize = (uint32_t)(DMA_MAX(AudioRemSize));
-  DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)current_pos;
+  DMA_InitStructure.DMA_BufferSize = (uint32_t)0xFFFE;
+  DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)0;
   DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)(&(SPI3->DR));
   DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
   DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
@@ -246,10 +217,9 @@ void Init_DMA_ForByteArray(uint16_t *begin_pos, uint32_t size)
   DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
   DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_1QuarterFull;
   DMA_Init(AUDIO_I2S_DMA_STREAM, &DMA_InitStructure);
-  
   SPI_I2S_DMACmd(SPI3,SPI_I2S_DMAReq_Tx,ENABLE);
   DMA_ITConfig(AUDIO_I2S_DMA_STREAM, DMA_IT_TC, ENABLE);
-  DMA_Cmd(AUDIO_I2S_DMA_STREAM, ENABLE);
+
   NVIC_InitTypeDef NVIC_InitStructure;
   NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream7_IRQn;
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
@@ -258,12 +228,30 @@ void Init_DMA_ForByteArray(uint16_t *begin_pos, uint32_t size)
   NVIC_Init(&NVIC_InitStructure);
 }
 
+void DMA_Play(uint16_t *begin_pos, uint32_t size)
+{
+  AudioTotalSize = size;
+  AudioRemSize = (size/2) - DMA_MAX(AudioTotalSize);
+  current_pos = begin_pos + DMA_MAX(AudioTotalSize);
+  start_pos = begin_pos;
+
+  DMA_InitStructure.DMA_BufferSize = (uint32_t)(DMA_MAX(AudioRemSize));
+  DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)current_pos;
+  DMA_Init(AUDIO_I2S_DMA_STREAM, &DMA_InitStructure);
+  DMA_Cmd(AUDIO_I2S_DMA_STREAM, ENABLE);
+  if ((CODEC_I2S->I2SCFGR & I2S_ENABLE_MASK) == 0)
+  {
+    I2S_Cmd(CODEC_I2S, ENABLE);
+  }
+}
+
 void DMA1_Stream7_IRQHandler(void)
 {
+  SetCommandLight(); 
   if(DMA_GetFlagStatus(AUDIO_I2S_DMA_STREAM, DMA_FLAG_TCIF7) != RESET)
-  {         
+  {        
     if (AudioRemSize > 0) // Check if the end of file has been reached
-    {      
+    {   
       while (DMA_GetCmdStatus(AUDIO_I2S_DMA_STREAM) != DISABLE) 
       {}    
       DMA_ClearFlag(AUDIO_I2S_DMA_STREAM, DMA_FLAG_TCIF7);        
@@ -275,10 +263,10 @@ void DMA1_Stream7_IRQHandler(void)
       AudioRemSize -= DMA_MAX(AudioRemSize);   
     }
     else
-    {    
+    {   
       DMA_Cmd(AUDIO_I2S_DMA_STREAM, DISABLE);      
       DMA_ClearFlag(AUDIO_I2S_DMA_STREAM, DMA_FLAG_TCIF7);
-      Init_DMA_ForByteArray(start_pos, AudioTotalSize);  
+      Player_TransferComplete_CallBack(start_pos, AudioTotalSize);
     }
   }
 }
@@ -289,4 +277,5 @@ void PeriphInit(uint32_t AudioFreq)
   CodecI2C_Init();
   Codec_CS42L22Init();
   CodecI2S_Init(AudioFreq);
+  Init_DMA();
 }

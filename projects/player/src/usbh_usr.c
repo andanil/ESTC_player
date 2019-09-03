@@ -26,14 +26,14 @@ extern USB_OTG_CORE_HANDLE          USB_OTG_Core;
 static uint8_t USBH_USR_ApplicationState = USH_USR_FS_INIT;
 
 struct List *first=0, *last=0, *current;
-static uint16_t sample_buffer[2048];
 extern volatile uint8_t number_of_songs;
-FATFS fatfs;
-FRESULT fresult;
+static FATFS fatfs;
+static FRESULT fresult;
+DIR Dir;
 
 void USBH_USR_Init(void)
 {
-
+  USBH_USR_ApplicationState = USH_USR_FS_INIT;
 }
 
 void USBH_USR_DeviceAttached(void)
@@ -115,7 +115,6 @@ void USBH_USR_OverCurrentDetected (void)
 
 int USBH_USR_MSC_Application(void)
 {
-
   switch (USBH_USR_ApplicationState)
   {
     case USH_USR_FS_INIT:
@@ -135,21 +134,15 @@ int USBH_USR_MSC_Application(void)
       break;
 
     case USH_USR_AUDIO:
-      if(OpenDir(first, last, fresult, "0:/")==0 || first==0)
+      if(f_opendir(&Dir, "0:/") != FR_OK)
       {
         SetErrorLight();
         break;
       }
-      last->next = first;
-      current = first;
-      //PeriphInit(I2S_AudioFreq_48k);
-      Init_DMA(sample_buffer);
-      while(1)
+      /*while(1)
       {
-        SetPlayLight();
-        /*PlayFile(current, fresult);
-        current = current->next;*/
-      }
+        PlayFile("0:/smile.wav");
+      }*/
 
       USBH_USR_ApplicationState = USH_USR_FS_INIT;
       break;

@@ -254,20 +254,10 @@ void USBH_Process(USB_OTG_CORE_HANDLE *pdev , USBH_HOST *phost)
       phost->usr_cb->DeviceSpeedDetected(phost->device_prop.speed);
         
       /* Open Control pipes */
-      USBH_Open_Channel (pdev,
-                           phost->Control.hc_num_in,
-                           phost->device_prop.address,
-                           phost->device_prop.speed,
-                           EP_TYPE_CTRL,
-                           phost->Control.ep0size); 
+      USBH_Open_Channel (pdev, phost->Control.hc_num_in, phost->device_prop.address, phost->device_prop.speed, EP_TYPE_CTRL, phost->Control.ep0size); 
       
       /* Open Control pipes */
-      USBH_Open_Channel (pdev,
-                           phost->Control.hc_num_out,
-                           phost->device_prop.address,
-                           phost->device_prop.speed,
-                           EP_TYPE_CTRL,
-                           phost->Control.ep0size);          
+      USBH_Open_Channel (pdev, phost->Control.hc_num_out, phost->device_prop.address, phost->device_prop.speed, EP_TYPE_CTRL, phost->Control.ep0size);      
    }
     break;
     
